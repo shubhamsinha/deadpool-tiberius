@@ -17,7 +17,7 @@ rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
 thiserror = "2.0"
-tiberius = {  git = "https://github.com/shubhamsinha/tiberius-optimized", rev = "b75a39d7ec7ecb598a966d93567d1aa17e4cc258" }
+tiberius = {  git = "https://github.com/shubhamsinha/tiberius-optimized", rev = "b75a39d7ec7ecb598a966d93567d1aa17e4cc258", default-features = false }
 deadpool = { version = "0.12", features = ["rt_tokio_1"] }
 tokio = { version = "1.44", features = ["net"] }
 tokio-util = { version = "0.7", features = ["compat"] }
