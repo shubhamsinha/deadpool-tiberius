@@ -253,6 +253,12 @@ impl Manager {
         self
     }
 
+    /// See [`tiberius::Config::trust_cert_ca_pem`]
+    pub fn trust_cert_ca_pem(mut self, pem_bytes: impl Into<Vec<u8>>) -> Self {
+        self.config.trust_cert_ca_pem(pem_bytes);
+        self
+    }
+
     /// Instance name defined in `Sql Browser`, defaults to None.
     pub fn instance_name(mut self, name: impl ToString) -> Self {
         self.config.instance_name(name);
