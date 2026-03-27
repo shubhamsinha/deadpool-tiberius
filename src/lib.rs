@@ -163,7 +163,13 @@ impl Manager {
             pool_config: Default::default(),
             runtime: None,
             hooks: Default::default(),
-            modify_tcp_stream: Box::new(|tcp_stream| tcp_stream.set_nodelay(true)),
+            modify_tcp_stream: Box::new(|tcp_stream| {
+                tcp_stream.set_nodelay(true)?;
+                let socket = socket2::SockRef::from(tcp_stream);
+                let _ = socket.set_recv_buffer_size(262144);
+                let _ = socket.set_send_buffer_size(65536);
+                Ok(())
+            }),
             #[cfg(feature = "sql-browser")]
             enable_sql_browser: false,
         }
