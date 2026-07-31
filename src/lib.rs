@@ -87,7 +87,7 @@ impl managed::Manager for Manager {
                 config.port(port);
 
                 let tcp = tokio::net::TcpStream::connect(config.get_addr()).await?;
-                tcp.set_nodelay(true)?;
+                (self.modify_tcp_stream)(&tcp)?;
 
                 Client::connect(config, tcp.compat_write()).await
             }
@@ -110,7 +110,7 @@ impl managed::Manager for Manager {
                 config.port(port);
 
                 let tcp = tokio::net::TcpStream::connect(config.get_addr()).await?;
-                tcp.set_nodelay(true)?;
+                (self.modify_tcp_stream)(&tcp)?;
 
                 Client::connect(config, tcp.compat_write()).await
             }
@@ -168,6 +168,20 @@ impl Manager {
                 let socket = socket2::SockRef::from(tcp_stream);
                 let _ = socket.set_recv_buffer_size(262144);
                 let _ = socket.set_send_buffer_size(65536);
+                // Mirrors mssql-jdbc, keepalive strict, tuning best effort
+                // https://github.com/microsoft/mssql-jdbc/blob/1c2302b0c64d/src/main/java/com/microsoft/sqlserver/jdbc/IOBuffer.java#L755-L793
+                socket.set_keepalive(true)?;
+                let keepalive = socket2::TcpKeepalive::new()
+                    .with_time(std::time::Duration::from_secs(30))
+                    .with_interval(std::time::Duration::from_secs(1));
+                #[cfg(any(target_os = "linux", target_os = "macos"))]
+                let keepalive = keepalive.with_retries(10);
+                let _ = socket.set_tcp_keepalive(&keepalive);
+                // Deadline for unACKed data in flight, which otherwise waits
+                // on tcp_retries2 for 15+ minutes.
+                // time + retries * interval = 30 + 10 * 1 = 40s
+                #[cfg(target_os = "linux")]
+                let _ = socket.set_tcp_user_timeout(Some(std::time::Duration::from_secs(40)));
                 Ok(())
             }),
             #[cfg(feature = "sql-browser")]
