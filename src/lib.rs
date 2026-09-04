@@ -291,6 +291,12 @@ impl Manager {
         self
     }
 
+    /// See [`tiberius::Config::readonly`]
+    pub fn readonly(mut self, readonly: bool) -> Self {
+        self.config.readonly(readonly);
+        self
+    }
+
     /// Set pool size, defaults to 10.
     pub fn max_size(mut self, value: usize) -> Self {
         self.pool_config.max_size = value;
